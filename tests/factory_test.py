@@ -210,6 +210,31 @@ class FactoryTest(absltest.TestCase):
 
     self.assertEqual(model.base_url, "http://custom:11434")
 
+  @mock.patch.dict(os.environ, {"AWS_PROFILE": "test-profile", "AWS_REGION": "us-east-1"})
+  def test_bedrock_uses_aws_credentials_from_environment(self):
+    """Factory should use AWS_PROFILE and AWS_REGION from environment for Bedrock models."""
+
+    @registry.register(r"^anthropic\.")
+    class FakeBedrockProvider(inference.BaseLanguageModel):  # pylint: disable=unused-variable
+
+      def __init__(self, model_id, aws_profile=None, aws_region=None, **kwargs):
+        self.model_id = model_id
+        self.aws_profile = aws_profile
+        self.aws_region = aws_region
+        super().__init__()
+
+      def infer(self, batch_prompts, **kwargs):
+        return [[inference.ScoredOutput(score=1.0, output="bedrock")]]
+
+      def infer_batch(self, prompts, batch_size=32):
+        return self.infer(prompts)
+
+    config = factory.ModelConfig(model_id="anthropic.claude-3-sonnet")
+    model = factory.create_model(config)
+
+    self.assertEqual(model.aws_profile, "test-profile")
+    self.assertEqual(model.aws_region, "us-east-1")
+
   def test_model_config_fields_are_immutable(self):
     """ModelConfig fields should not be modifiable after creation."""
     config = factory.ModelConfig(

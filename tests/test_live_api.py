@@ -34,11 +34,14 @@ load_dotenv()
 
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 DEFAULT_OPENAI_MODEL = "gpt-4o"
+DEFAULT_BEDROCK_MODEL = "anthropic.claude-3-sonnet-20240229-v1:0"
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get(
     "LANGEXTRACT_API_KEY"
 )
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+AWS_REGION = os.environ.get("AWS_REGION")
+AWS_PROFILE = os.environ.get("AWS_PROFILE")
 
 skip_if_no_gemini = pytest.mark.skipif(
     not GEMINI_API_KEY,
@@ -50,6 +53,10 @@ skip_if_no_gemini = pytest.mark.skipif(
 skip_if_no_openai = pytest.mark.skipif(
     not OPENAI_API_KEY,
     reason="OpenAI API key not available (set OPENAI_API_KEY)",
+)
+skip_if_no_bedrock = pytest.mark.skipif(
+    not AWS_REGION,
+    reason="AWS Bedrock not available (set AWS_REGION and configure AWS credentials)",
 )
 
 live_api = pytest.mark.live_api

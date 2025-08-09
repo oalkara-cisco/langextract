@@ -18,6 +18,7 @@
 - [Installation](#installation)
 - [API Key Setup for Cloud Models](#api-key-setup-for-cloud-models)
 - [Using OpenAI Models](#using-openai-models)
+- [Using AWS Bedrock Models](#using-aws-bedrock-models)
 - [Using Local LLMs with Ollama](#using-local-llms-with-ollama)
 - [More Examples](#more-examples)
   - [*Romeo and Juliet* Full Text Extraction](#romeo-and-juliet-full-text-extraction)
@@ -181,6 +182,15 @@ pip install -e ".[dev]"
 
 # For testing (includes pytest):
 pip install -e ".[test]"
+
+# For OpenAI support:
+pip install -e ".[openai]"
+
+# For AWS Bedrock support:
+pip install -e ".[bedrock]"
+
+# For all optional dependencies:
+pip install -e ".[all]"
 ```
 
 ### Docker
@@ -192,8 +202,8 @@ docker run --rm -e LANGEXTRACT_API_KEY="your-api-key" langextract python your_sc
 
 ## API Key Setup for Cloud Models
 
-When using LangExtract with cloud-hosted models (like Gemini or OpenAI), you'll need to
-set up an API key. On-device models don't require an API key. For developers
+When using LangExtract with cloud-hosted models (like Gemini, OpenAI, or AWS Bedrock), you'll need to
+set up appropriate credentials. On-device models don't require API keys. For developers
 using local LLMs, LangExtract offers built-in support for Ollama and can be
 extended to other third-party APIs by updating the inference endpoints.
 
@@ -204,6 +214,7 @@ Get API keys from:
 *   [AI Studio](https://aistudio.google.com/app/apikey) for Gemini models
 *   [Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/sdks/overview) for enterprise use
 *   [OpenAI Platform](https://platform.openai.com/api-keys) for OpenAI models
+*   [AWS Bedrock](https://aws.amazon.com/bedrock/) - uses AWS credentials (no separate API key)
 
 ### Setting up API key in your environment
 
@@ -253,6 +264,51 @@ result = lx.extract(
 )
 ```
 
+### AWS Credentials for Bedrock
+
+AWS Bedrock uses standard AWS credentials instead of API keys. Configure your credentials using one of these methods:
+
+**Option 1: Environment Variables**
+
+```bash
+export AWS_PROFILE="your-profile-name"  # Optional: specific AWS profile
+export AWS_REGION="us-east-1"          # Required: AWS region where Bedrock is available
+```
+
+**Option 2: AWS Config Files**
+
+Configure credentials in `~/.aws/credentials` and `~/.aws/config`:
+
+```ini
+# ~/.aws/credentials
+[default]
+aws_access_key_id = YOUR_ACCESS_KEY
+aws_secret_access_key = YOUR_SECRET_KEY
+
+# ~/.aws/config
+[default]
+region = us-east-1
+```
+
+**Option 3: IAM Role (for EC2/Lambda/ECS)**
+
+If running on AWS infrastructure, use IAM roles for automatic credential management.
+
+Make sure your AWS credentials have the necessary permissions to access Bedrock:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [{
+        "Effect": "Allow",
+        "Action": [
+            "bedrock:InvokeModel",
+            "bedrock:ListFoundationModels"
+        ],
+        "Resource": "*"
+    }]
+}
+```
+
 ## Using OpenAI Models
 
 LangExtract supports OpenAI models (requires optional dependency: `pip install langextract[openai]`):
@@ -272,6 +328,37 @@ result = lx.extract(
 ```
 
 Note: OpenAI models require `fence_output=True` and `use_schema_constraints=False` because LangExtract doesn't implement schema constraints for OpenAI yet.
+
+## Using AWS Bedrock Models
+
+LangExtract supports AWS Bedrock models including Claude, Titan, Llama, and more (requires optional dependency: `pip install langextract[bedrock]`):
+
+```python
+import langextract as lx
+import os
+
+# AWS credentials are loaded from environment or AWS config
+# Set AWS_PROFILE and AWS_REGION environment variables or use boto3 defaults
+result = lx.extract(
+    text_or_documents=input_text,
+    prompt_description=prompt,
+    examples=examples,
+    model_id="anthropic.claude-3-sonnet-20240229-v1:0",  # Or any supported Bedrock model
+    aws_region=os.environ.get('AWS_REGION'),  # Required
+    aws_profile=os.environ.get('AWS_PROFILE'),  # Optional
+    temperature=0.0
+)
+```
+
+Supported Bedrock model families:
+- **Anthropic Claude**: `anthropic.claude-3-sonnet`, `anthropic.claude-3-haiku`, etc.
+- **Amazon Titan**: `amazon.titan-text-lite`, `amazon.titan-text-express`, etc.
+- **Meta Llama**: `meta.llama3-8b`, `meta.llama3-70b`, etc.
+- **Cohere Command**: `cohere.command-text`, `cohere.command-light`, etc.
+- **AI21 Labs Jurassic**: `ai21.j2-mid`, `ai21.j2-ultra`, etc.
+- **Mistral**: `mistral.mistral-7b`, `mistral.mixtral-8x7b`, etc.
+
+Note: Ensure your AWS credentials have access to Bedrock and the specific models you want to use.
 
 ## Using Local LLMs with Ollama
 

@@ -67,8 +67,8 @@ model = lx.factory.create_model(config)
 ```
 
 Provider names can be:
-- Full class name: `"GeminiLanguageModel"`, `"OpenAILanguageModel"`, `"OllamaLanguageModel"`
-- Partial match: `"gemini"`, `"openai"`, `"ollama"` (case-insensitive)
+- Full class name: `"GeminiLanguageModel"`, `"OpenAILanguageModel"`, `"OllamaLanguageModel"`, `"BedrockLanguageModel"`
+- Partial match: `"gemini"`, `"openai"`, `"ollama"`, `"bedrock"` (case-insensitive)
 
 ## Provider Types
 
@@ -77,12 +77,16 @@ Ships with langextract, dependencies included:
 - **Gemini** (`gemini.py`): Google's Gemini models
 - **Ollama** (`ollama.py`): Local models via Ollama
 
-### 2. Built-in Provider with Optional Dependencies
+### 2. Built-in Providers with Optional Dependencies
 Ships with langextract, but requires extra installation:
 - **OpenAI** (`openai.py`): OpenAI's GPT models
   - Code included in package
   - Requires: `pip install langextract[openai]` to install OpenAI SDK
   - Future: May be moved to external plugin package
+- **AWS Bedrock** (`bedrock.py`): AWS Bedrock models (Claude, Titan, Llama, etc.)
+  - Code included in package
+  - Requires: `pip install langextract[bedrock]` to install boto3 SDK
+  - Supports multiple model families via Bedrock API
 
 ### 3. External Plugins (Third-party)
 Separate packages that extend LangExtract with new providers:
@@ -340,6 +344,9 @@ The factory automatically resolves API keys from environment:
 | Gemini   | `GEMINI_API_KEY`, `LANGEXTRACT_API_KEY` |
 | OpenAI   | `OPENAI_API_KEY`, `LANGEXTRACT_API_KEY` |
 | Ollama   | `OLLAMA_BASE_URL` (default: http://localhost:11434) |
+| AWS Bedrock | `AWS_PROFILE` (optional), `AWS_REGION` (required) |
+
+Note: AWS Bedrock uses standard AWS credentials (IAM keys, roles, or profiles) rather than API keys.
 
 ## Design Principles
 

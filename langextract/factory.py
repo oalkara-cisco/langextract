@@ -78,6 +78,14 @@ def _kwargs_with_environment_defaults(
             break
         break
 
+  # AWS Bedrock specific environment defaults
+  bedrock_prefixes = ["anthropic", "amazon", "meta", "cohere", "ai21", "mistral"]
+  if any(prefix in model_id.lower() for prefix in bedrock_prefixes):
+    if "aws_profile" not in resolved:
+      resolved["aws_profile"] = os.getenv("AWS_PROFILE")
+    if "aws_region" not in resolved:
+      resolved["aws_region"] = os.getenv("AWS_REGION")
+
   if "ollama" in model_id.lower() and "base_url" not in resolved:
     resolved["base_url"] = os.getenv(
         "OLLAMA_BASE_URL", "http://localhost:11434"
