@@ -31,19 +31,21 @@ from langextract.providers import registry
 
 
 @registry.register(
-    r'^anthropic\.claude',  # anthropic.claude-3-sonnet, anthropic.claude-3-haiku, etc.
-    r'^amazon\.titan',      # amazon.titan-text-lite, amazon.titan-text-express, etc.
-    r'^meta\.llama',        # meta.llama3-8b, meta.llama3-70b, etc.
-    r'^cohere\.command',    # cohere.command-text, cohere.command-light, etc.
-    r'^ai21\.j2',           # ai21.j2-mid, ai21.j2-ultra, etc.
-    r'^mistral\.',          # mistral.mistral-7b, mistral.mixtral-8x7b, etc.
+    r'^anthropic\.claude.*',  # anthropic.claude-3-sonnet, anthropic.claude-3-haiku, etc.
+    r'^us\.anthropic\.claude.*',  # us.anthropic.claude-3-5-sonnet, etc. (cross-region models)
+    r'^amazon\.titan.*',      # amazon.titan-text-lite, amazon.titan-text-express, etc.
+    r'^meta\.llama.*',        # meta.llama3-8b, meta.llama3-70b, etc.
+    r'^cohere\.command.*',    # cohere.command-text, cohere.command-light, etc.
+    r'^ai21\.j2.*',           # ai21.j2-mid, ai21.j2-ultra, etc.
+    r'^mistral\..*',          # mistral.mistral-7b, mistral.mixtral-8x7b, etc.
     priority=10,
 )
+
 @dataclasses.dataclass(init=False)
 class BedrockLanguageModel(inference.BaseLanguageModel):
   """Language model inference using AWS Bedrock API with structured output."""
 
-  model_id: str = 'anthropic.claude-3-sonnet-20240229-v1:0'
+  model_id: str = 'us.anthropic.claude-3-sonnet-20240229-v1:0'
   aws_profile: str | None = None
   aws_region: str | None = None
   format_type: data.FormatType = data.FormatType.JSON
@@ -57,7 +59,7 @@ class BedrockLanguageModel(inference.BaseLanguageModel):
 
   def __init__(
       self,
-      model_id: str = 'anthropic.claude-3-sonnet-20240229-v1:0',
+      model_id: str = 'us.anthropic.claude-3-sonnet-20240229-v1:0',
       aws_profile: str | None = None,
       aws_region: str | None = None,
       format_type: data.FormatType = data.FormatType.JSON,
@@ -119,7 +121,11 @@ class BedrockLanguageModel(inference.BaseLanguageModel):
 
   def _prepare_request_body(self, prompt: str, config: dict) -> dict:
     """Prepare the request body based on the model provider."""
-    model_provider = self.model_id.split('.')[0].lower()
+    # Handle cross-region model IDs like us.anthropic.claude-3-5-haiku
+    if self.model_id.startswith('us.anthropic.'):
+      model_provider = 'anthropic'
+    else:
+      model_provider = self.model_id.split('.')[0].lower()
 
     # Add format instructions to the prompt
     format_instruction = ''
@@ -214,7 +220,11 @@ class BedrockLanguageModel(inference.BaseLanguageModel):
 
   def _extract_response_text(self, response_body: dict) -> str:
     """Extract text from the response based on the model provider."""
-    model_provider = self.model_id.split('.')[0].lower()
+    # Handle cross-region model IDs like us.anthropic.claude-3-5-haiku
+    if self.model_id.startswith('us.anthropic.'):
+      model_provider = 'anthropic'
+    else:
+      model_provider = self.model_id.split('.')[0].lower()
 
     if model_provider == 'anthropic':
       # Claude models

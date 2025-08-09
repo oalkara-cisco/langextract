@@ -1,0 +1,8 @@
+# AWS Bedrock example requirements
+# Install with: pip install -r requirements.txt
+
+# Core langextract with Bedrock support
+langextract[bedrock]>=1.0.5
+
+# Optional: AWS CLI for credential management
+# awscli>=1.32.0
